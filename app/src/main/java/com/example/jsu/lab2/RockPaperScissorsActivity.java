@@ -10,6 +10,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import android.widget.*;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class RockPaperScissorsActivity extends AppCompatActivity {
@@ -29,8 +32,24 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
 
     };
 
+    public enum Result {
+
+        PLAYER_WIN("Player wins..."),
+        COMPUTER_WIN("Computer wins..."),
+        DRAW("It's a draw...");
+
+        private String resultMessage;
+
+        private Result(String msg) { resultMessage = msg; }
+
+        public String getWinnerMessage() {return resultMessage;}
+    }
+
     private Weapon playerWeapon;
     private Weapon computerWeapon;
+
+    private Result gameResult;
+    private String weaponResultMessage;
 
     private int playerScore;
     private int computerScore;
@@ -56,8 +75,7 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
         playerScore = computerScore = 0;
         random = new Random();
 
-        updateScoreBoard();
-
+        updateScoreTextView();
     }
 
     @Override
@@ -82,72 +100,105 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateScoreBoard(){
+    private void updateTextViews(){
+        updateScoreTextView();
+
+        TextView playerTextView = (TextView) findViewById(R.id.playerWeaponTextView);
+        String playerString = "Player's Weapon: " + playerWeapon.toString();
+        playerTextView.setText(playerString);
+
+        TextView computerTextView = (TextView) findViewById(R.id.computerWeaponTextView);
+        String computerString = "Computer's Weapon: " + computerWeapon.toString();
+        computerTextView.setText(computerString);
+
+        TextView resultTextView = (TextView) findViewById(R.id.resultTextView);
+        String resultString = gameResult.getWinnerMessage() + " " + weaponResultMessage;
+        resultTextView.setText(resultString);
+    }
+
+    private void updateScoreTextView(){
         TextView scoreTextView = (TextView) findViewById(R.id.scoreTextView);
-        scoreTextView.setText("Player: " + playerScore + ", " + "Computer: " + computerScore);
+        String scoreString = "Player: " + playerScore + ", " + "Computer: " + computerScore;
+        scoreTextView.setText(scoreString);
     }
 
     public void playerPicksRock(View v){
         playerWeapon = Weapon.ROCK;
-        updatePlayerWeaponTextView();
         playHand();
     }
 
     public void playerPicksPaper(View v){
         playerWeapon = Weapon.PAPER;
-        updatePlayerWeaponTextView();
         playHand();
     }
 
     public void playerPicksScissors(View v){
         playerWeapon = Weapon.SCISSORS;
-        updatePlayerWeaponTextView();
         playHand();
     }
 
-    public void updatePlayerWeaponTextView(){
-        TextView playerTextView = (TextView) findViewById(R.id.playerWeaponTextView);
-        playerTextView.setText("Player's Weapon: " + playerWeapon.toString());
-    }
 
     public void playHand(){
         generateComputerWeapon();
 
         if (playerWeapon == Weapon.ROCK){
             if (computerWeapon == Weapon.PAPER){
-                setComputerWin("Paper Covers Rock");
+                setComputerWin();
+                weaponResultMessage = "Paper Covers Rock";
             }
             else if (computerWeapon == Weapon.SCISSORS){
-                setPlayerWin("Rock Smashes Scissors");
+                setPlayerWin();
+                weaponResultMessage = "Rock Smashes Scissors";
             }
             else{
                 setDraw();
+                weaponResultMessage = "";
             }
         }
         else if (playerWeapon == Weapon.SCISSORS){
             if (computerWeapon == Weapon.PAPER){
-                setPlayerWin("Scissors Cuts Paper");
+                setPlayerWin();
+                weaponResultMessage = "Scissors Cuts Paper";
             }
             else if (computerWeapon == Weapon.SCISSORS){
                 setDraw();
+                weaponResultMessage = "";
             }
             else{
-                setComputerWin("Rock Smashes Scissors");
+                setComputerWin();
+                weaponResultMessage = "Rock Smashes Scissors";
             }
         }
         else{
             if (computerWeapon == Weapon.PAPER){
                 setDraw();
+                weaponResultMessage = "";
             }
             else if (computerWeapon == Weapon.SCISSORS){
-                setComputerWin("Scissors Cuts Paper");
+                setComputerWin();
+                weaponResultMessage = "Scissors Cuts Paper";
             }
             else{
-                setPlayerWin("Paper Covers Rock");
+                setPlayerWin();
+                weaponResultMessage = "Paper Covers Rock";
             }
         }
 
-        updateScoreBoard();
+        updateTextViews();
+    }
+
+    public void setPlayerWin(){
+        playerScore++;
+        gameResult = Result.PLAYER_WIN;
+    }
+
+    public void setComputerWin(){
+        computerScore++;
+        gameResult = Result.COMPUTER_WIN;
+    }
+
+    public void setDraw(){
+        gameResult = Result.DRAW;
     }
 
     public void generateComputerWeapon(){
@@ -161,28 +212,6 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
                 break;
             default: computerWeapon = Weapon.ROCK;
         }
-
-        TextView computerTextView = (TextView) findViewById(R.id.computerWeaponTextView);
-        computerTextView.setText("Computer's Weapon: " + computerWeapon.toString());
-    }
-
-    public void setPlayerWin(String message){
-        updateGameResult("Player wins... " + message);
-        playerScore++;
-    }
-
-    public void setComputerWin(String message){
-        updateGameResult("Computer wins... " + message);
-        computerScore++;
-    }
-
-    public void setDraw(){
-        updateGameResult("It's a draw!");
-    }
-
-    public void updateGameResult(String result){
-        TextView resultTextView = (TextView) findViewById(R.id.resultTextView);
-        resultTextView.setText(result);
     }
 
 }

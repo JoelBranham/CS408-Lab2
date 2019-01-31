@@ -11,45 +11,38 @@ import android.view.MenuItem;
 
 import android.widget.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 public class RockPaperScissorsActivity extends AppCompatActivity {
 
     public enum Weapon {
-
-        ROCK("Rock"),
-        PAPER("Paper"),
-        SCISSORS("Scissors");
+        ROCK("Rock", 0),
+        PAPER("Paper", 1),
+        SCISSORS("Scissors", 2);
 
         private String message;
+        private int weaponNumber;
 
-        private Weapon(String msg) { message = msg; }
+        private Weapon(String msg, int wpnNum) {
+            message = msg;
+            weaponNumber = wpnNum;
+        }
 
         @Override
         public String toString() { return message; }
 
-    };
-
-    public enum Result {
-
-        PLAYER_WIN("Player wins..."),
-        COMPUTER_WIN("Computer wins..."),
-        DRAW("It's a draw...");
-
-        private String resultMessage;
-
-        private Result(String msg) { resultMessage = msg; }
-
-        public String getWinnerMessage() {return resultMessage;}
+        public int getWeaponNumber(){
+            return weaponNumber;
+        }
     }
 
     private Weapon playerWeapon;
     private Weapon computerWeapon;
 
-    private Result gameResult;
     private String weaponResultMessage;
+    private String gameResultMessage;
+
+    private Map weaponToAdjective;
 
     private int playerScore;
     private int computerScore;
@@ -73,7 +66,13 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
         });
 
         playerScore = computerScore = 0;
+
         random = new Random();
+
+        weaponToAdjective = new HashMap<Weapon, String>();
+        weaponToAdjective.put(Weapon.ROCK, "Blunts");
+        weaponToAdjective.put(Weapon.PAPER, "Covers");
+        weaponToAdjective.put(Weapon.SCISSORS, "Cuts");
 
         updateScoreTextView();
     }
@@ -100,28 +99,6 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void updateTextViews(){
-        updateScoreTextView();
-
-        TextView playerTextView = (TextView) findViewById(R.id.playerWeaponTextView);
-        String playerString = "Player's Weapon: " + playerWeapon.toString();
-        playerTextView.setText(playerString);
-
-        TextView computerTextView = (TextView) findViewById(R.id.computerWeaponTextView);
-        String computerString = "Computer's Weapon: " + computerWeapon.toString();
-        computerTextView.setText(computerString);
-
-        TextView resultTextView = (TextView) findViewById(R.id.resultTextView);
-        String resultString = gameResult.getWinnerMessage() + " " + weaponResultMessage;
-        resultTextView.setText(resultString);
-    }
-
-    private void updateScoreTextView(){
-        TextView scoreTextView = (TextView) findViewById(R.id.scoreTextView);
-        String scoreString = "Player: " + playerScore + ", " + "Computer: " + computerScore;
-        scoreTextView.setText(scoreString);
-    }
-
     public void playerPicksRock(View v){
         playerWeapon = Weapon.ROCK;
         playHand();
@@ -141,64 +118,32 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
     public void playHand(){
         generateComputerWeapon();
 
-        if (playerWeapon == Weapon.ROCK){
-            if (computerWeapon == Weapon.PAPER){
-                setComputerWin();
-                weaponResultMessage = "Paper Covers Rock";
-            }
-            else if (computerWeapon == Weapon.SCISSORS){
-                setPlayerWin();
-                weaponResultMessage = "Rock Smashes Scissors";
-            }
-            else{
-                setDraw();
-                weaponResultMessage = "";
-            }
+        determineWinner();
+
+        updateScoreTextView();
+        updatePlayerWeaponTextView();
+        updateComputerWeaponTextView();
+        updateGameResultTextView();
+    }
+
+    public void determineWinner(){
+        int playerWeaponNumber = playerWeapon.getWeaponNumber();
+        int computerWeaponNumber = computerWeapon.getWeaponNumber();
+
+        if (playerWeaponNumber == computerWeaponNumber){
+            gameResultMessage = "It's a draw...";
+            weaponResultMessage = "";
         }
-        else if (playerWeapon == Weapon.SCISSORS){
-            if (computerWeapon == Weapon.PAPER){
-                setPlayerWin();
-                weaponResultMessage = "Scissors Cuts Paper";
-            }
-            else if (computerWeapon == Weapon.SCISSORS){
-                setDraw();
-                weaponResultMessage = "";
-            }
-            else{
-                setComputerWin();
-                weaponResultMessage = "Rock Smashes Scissors";
-            }
+        else if ((computerWeaponNumber + 1) % 3  == playerWeaponNumber){
+            gameResultMessage = "Player wins...";
+            playerScore++;
+            weaponResultMessage = playerWeapon + " " + weaponToAdjective.get(playerWeapon) + " " + computerWeapon;
         }
         else{
-            if (computerWeapon == Weapon.PAPER){
-                setDraw();
-                weaponResultMessage = "";
-            }
-            else if (computerWeapon == Weapon.SCISSORS){
-                setComputerWin();
-                weaponResultMessage = "Scissors Cuts Paper";
-            }
-            else{
-                setPlayerWin();
-                weaponResultMessage = "Paper Covers Rock";
-            }
+            gameResultMessage = "Computer wins...";
+            computerScore++;
+            weaponResultMessage = computerWeapon + " " + weaponToAdjective.get(computerWeapon) + " " + playerWeapon;
         }
-
-        updateTextViews();
-    }
-
-    public void setPlayerWin(){
-        playerScore++;
-        gameResult = Result.PLAYER_WIN;
-    }
-
-    public void setComputerWin(){
-        computerScore++;
-        gameResult = Result.COMPUTER_WIN;
-    }
-
-    public void setDraw(){
-        gameResult = Result.DRAW;
     }
 
     public void generateComputerWeapon(){
@@ -212,6 +157,30 @@ public class RockPaperScissorsActivity extends AppCompatActivity {
                 break;
             default: computerWeapon = Weapon.ROCK;
         }
+    }
+
+    private void updatePlayerWeaponTextView(){
+        TextView playerTextView = findViewById(R.id.playerWeaponTextView);
+        String playerString = "Player's Weapon: " + playerWeapon;
+        playerTextView.setText(playerString);
+    }
+
+    private void updateComputerWeaponTextView(){
+        TextView computerTextView = findViewById(R.id.computerWeaponTextView);
+        String computerString = "Computer's Weapon: " + computerWeapon;
+        computerTextView.setText(computerString);
+    }
+
+    private void updateGameResultTextView(){
+        TextView resultTextView = findViewById(R.id.resultTextView);
+        String resultString = gameResultMessage + " " + weaponResultMessage;
+        resultTextView.setText(resultString);
+    }
+
+    private void updateScoreTextView(){
+        TextView scoreTextView = (TextView) findViewById(R.id.scoreTextView);
+        String scoreString = "Player: " + playerScore + ", " + "Computer: " + computerScore;
+        scoreTextView.setText(scoreString);
     }
 
 }
